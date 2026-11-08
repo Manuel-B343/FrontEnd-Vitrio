@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import {
-  Building2, FileVideo, FolderKanban, LayoutDashboard, LayoutTemplate, LogOut, Menu, MonitorPlay,
+  Building2, FileVideo, FolderKanban, LayoutDashboard, LayoutTemplate, LogOut, Menu,
   MonitorSmartphone, UserCircle, Users, type LucideIcon,
 } from 'lucide-react'
+import { Logo, LogoMark } from '@/components/logo'
 import { useAuth } from '@/lib/auth'
 import { ROL_LABEL } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -25,17 +26,14 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { user, logout } = useAuth()
   const link = ({ isActive }: { isActive: boolean }) =>
     cn(
-      'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-      isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+      'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+      isActive
+        ? 'bg-white/[0.07] text-white shadow-[inset_2px_0_0_#60a5fa]'
+        : 'text-muted-foreground hover:bg-white/5 hover:text-foreground',
     )
   return (
     <div className="flex h-full flex-col gap-2 p-3">
-      <div className="flex items-center gap-2 px-2 py-2">
-        <div className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-          <MonitorPlay className="size-4" />
-        </div>
-        <span className="text-lg font-semibold">Vitrio</span>
-      </div>
+      <Logo size={26} className="px-2 py-3" />
       <nav className="mt-2 flex flex-1 flex-col gap-1">
         {NAV.map(({ to, label, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end} className={link} onClick={onNavigate}>
@@ -62,7 +60,7 @@ export default function Layout() {
   const [open, setOpen] = useState(false)
   return (
     <div className="min-h-svh md:grid md:grid-cols-[240px_1fr]">
-      <aside className="sticky top-0 hidden h-svh border-r bg-card md:block">
+      <aside className="sticky top-0 hidden h-svh border-r border-white/[0.07] bg-sidebar md:block">
         <Sidebar />
       </aside>
       <div className="flex min-w-0 flex-col">
@@ -70,14 +68,15 @@ export default function Layout() {
           <Button variant="ghost" size="icon" aria-label="Menú" onClick={() => setOpen(true)}>
             <Menu />
           </Button>
-          <span className="font-semibold">Vitrio</span>
+          <LogoMark size={22} />
+          <span className="font-black tracking-[0.07em]">VIT<span className="font-light opacity-60">RIO</span></span>
         </header>
         <main className="flex-1 p-4 md:p-8">
           <Outlet />
         </main>
       </div>
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="left" className="w-60 p-0">
+        <SheetContent side="left" className="w-60 border-white/[0.07] bg-sidebar p-0">
           <SheetTitle className="sr-only">Navegación</SheetTitle>
           <Sidebar onNavigate={() => setOpen(false)} />
         </SheetContent>

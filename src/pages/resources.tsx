@@ -40,13 +40,27 @@ const ESTADO_PLANTILLA = opts([['ACTIVA', 'Activa'], ['INACTIVA', 'Inactiva'], [
 const ESTADO_DISPOSITIVO = opts([['ACTIVO', 'Activo'], ['INACTIVO', 'Inactivo'], ['SIN_CONEXION', 'Sin conexión']])
 const label = (list: { value: string; label: string }[], v: string) => list.find((o) => o.value === v)?.label ?? v
 
+const BADGE: Record<string, string> = {
+  PROPUESTO: '#94a3b8', ANALISIS: '#fbbf24', APROBADO: '#34d399', PLANIFICACION: '#60a5fa', EJECUCION: '#3b82f6',
+  SEGUIMIENTO: '#a78bfa', PAUSADO: '#fbbf24', CANCELADO: '#f87171', ACTIVA: '#34d399', INACTIVA: '#f87171',
+  DEPRECADA: '#64748b', ACTIVO: '#34d399', INACTIVO: '#f87171', SIN_CONEXION: '#fbbf24',
+  ADMINISTRADOR: '#818cf8', ADMINISTRADOR_CLIENTE: '#a78bfa', CLIENTE: '#60a5fa',
+}
+
+function Pill({ value, text }: { value: string; text: string }) {
+  const c = BADGE[value] ?? '#94a3b8'
+  return (
+    <span
+      className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+      style={{ color: c, background: c + '26', borderColor: c + '4d' }}
+    >
+      {text}
+    </span>
+  )
+}
+
 function EstadoBadge({ value, list }: { value: string; list: { value: string; label: string }[] }) {
-  const variant = ['ACTIVO', 'ACTIVA', 'EJECUCION', 'APROBADO'].includes(value)
-    ? 'default'
-    : ['CANCELADO', 'DEPRECADA', 'SIN_CONEXION'].includes(value)
-      ? 'destructive'
-      : 'secondary'
-  return <Badge variant={variant}>{label(list, value)}</Badge>
+  return <Pill value={value} text={label(list, value)} />
 }
 
 const relCliente = {
@@ -231,8 +245,8 @@ const usuarios: ResourceConfig = {
     { header: 'Usuario', sort: 'username', render: (r) => <span className="font-medium">{r.username}</span> },
     { header: 'Nombre', render: (r) => dash(`${r.first_name ?? ''} ${r.last_name ?? ''}`.trim()) },
     { header: 'Email', render: (r) => r.email },
-    { header: 'Rol', render: (r) => <Badge variant="secondary">{ROL_LABEL[r.rol as Rol] ?? r.rol}</Badge> },
-    { header: 'Estado', render: (r) => <Badge variant={r.is_active ? 'default' : 'outline'}>{r.is_active ? 'Activo' : 'Inactivo'}</Badge> },
+    { header: 'Rol', render: (r) => <Pill value={r.rol} text={ROL_LABEL[r.rol as Rol] ?? r.rol} /> },
+    { header: 'Estado', render: (r) => <Pill value={r.is_active ? 'ACTIVO' : 'INACTIVO'} text={r.is_active ? 'Activo' : 'Inactivo'} /> },
     { header: 'Último acceso', render: (r) => fechaHora(r.last_login) },
   ],
   rowActions: (row, h) => [
