@@ -52,6 +52,12 @@ async function parseError(res: Response): Promise<ApiError> {
   )
 }
 
+/** Si otra pestaña ya guardó un refresh distinto, la renovación de esta no debe cerrar la sesión. */
+function otraPestanaRenovo(usado: string): boolean {
+  const actual = tokens.refresh
+  return !!actual && actual !== usado
+}
+
 // El refresh es de un solo uso: se comparte una unica renovacion en curso.
 let refreshing: Promise<boolean> | null = null
 
@@ -66,12 +72,12 @@ function refreshAccess(): Promise<boolean> {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refresh }),
         })
-        if (!res.ok) return false
+        if (!res.ok) return otraPestanaRenovo(refresh)
         const data = await res.json()
         tokens.set(data.access, data.refresh ?? refresh)
         return true
       } catch {
-        return false
+        return otraPestanaRenovo(refresh)
       }
     })().finally(() => { refreshing = null })
   }

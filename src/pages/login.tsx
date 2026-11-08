@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
+const YEAR = new Date().getFullYear()
+
 const POINTS = [
   { icon: FolderKanban, text: 'Proyectos y clientes en un solo lugar' },
   { icon: LayoutTemplate, text: 'Plantillas y contenidos reutilizables' },
@@ -67,7 +69,7 @@ export default function Login() {
             ))}
           </ul>
         </div>
-        <p className="relative text-xs text-slate-500">© {new Date().getFullYear()} Vitrio</p>
+        <p className="relative text-xs text-slate-500">© {YEAR} Vitrio</p>
       </div>
 
       {/* Formulario */}
@@ -92,6 +94,7 @@ export default function Login() {
                 onChange={(e) => setUsername(e.target.value)}
                 className="h-11"
               />
+              <p className="text-xs text-muted-foreground">Si tu cuenta fue migrada, tu usuario es tu correo electrónico.</p>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">Contraseña</Label>

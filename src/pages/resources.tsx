@@ -31,6 +31,7 @@ const opts = (pairs: [string, string][]) => pairs.map(([value, label]) => ({ val
 const ESTADO_PROYECTO = opts([
   ['PROPUESTO', 'Propuesto'], ['ANALISIS', 'Análisis'], ['APROBADO', 'Aprobado'], ['PLANIFICACION', 'Planificación'],
   ['EJECUCION', 'Ejecución'], ['SEGUIMIENTO', 'Seguimiento'], ['PAUSADO', 'Pausado'], ['CANCELADO', 'Cancelado'],
+  ['COMPLETADO', 'Completado'], ['CERRADO', 'Cerrado'],
 ])
 const TIPO_PLANTILLA = opts([
   ['VIDEO', 'Video'], ['IMAGEN', 'Imagen'], ['AUDIO', 'Audio'], ['METADATO', 'Metadato'], ['DOCUMENTO', 'Documento'],
@@ -43,7 +44,7 @@ const label = (list: { value: string; label: string }[], v: string) => list.find
 const BADGE: Record<string, string> = {
   PROPUESTO: '#94a3b8', ANALISIS: '#fbbf24', APROBADO: '#34d399', PLANIFICACION: '#60a5fa', EJECUCION: '#3b82f6',
   SEGUIMIENTO: '#a78bfa', PAUSADO: '#fbbf24', CANCELADO: '#f87171', ACTIVA: '#34d399', INACTIVA: '#f87171',
-  DEPRECADA: '#64748b', ACTIVO: '#34d399', INACTIVO: '#f87171', SIN_CONEXION: '#fbbf24',
+  DEPRECADA: '#64748b', COMPLETADO: '#34d399', CERRADO: '#64748b', ACTIVO: '#34d399', INACTIVO: '#f87171', SIN_CONEXION: '#fbbf24',
   ADMINISTRADOR: '#818cf8', ADMINISTRADOR_CLIENTE: '#a78bfa', CLIENTE: '#60a5fa',
 }
 
@@ -212,7 +213,7 @@ const clientes: ResourceConfig = {
   fields: [
     { name: 'nombre', label: 'Nombre', type: 'text', required: true },
     { name: 'email', label: 'Email', type: 'email', required: true },
-    { name: 'telefono', label: 'Teléfono', type: 'text', required: true, hint: 'Ej. +34 600 123 456' },
+    { name: 'telefono', label: 'Teléfono', type: 'text', required: true, hint: 'Ej. +57 300 123 4567' },
   ],
   columns: [
     { header: 'Nombre', sort: 'nombre', render: (r) => <span className="font-medium">{r.nombre}</span> },
@@ -228,6 +229,7 @@ const usuarios: ResourceConfig = {
   canWrite: canManage,
   deleteNote: 'El usuario quedará desactivado y se cerrarán sus sesiones.',
   defaultValues: (u) => ({ rol: 'CLIENTE', id_cliente: u.rol === 'ADMINISTRADOR_CLIENTE' && u.id_cliente ? String(u.id_cliente) : '' }),
+  prepareBody: (body, values) => (values.rol === 'ADMINISTRADOR' ? { ...body, id_cliente: null } : body),
   fields: [
     { name: 'username', label: 'Usuario', type: 'text', required: true },
     { name: 'email', label: 'Email', type: 'email', required: true },
@@ -246,12 +248,12 @@ const usuarios: ResourceConfig = {
     { header: 'Nombre', render: (r) => dash(`${r.first_name ?? ''} ${r.last_name ?? ''}`.trim()) },
     { header: 'Email', render: (r) => r.email },
     { header: 'Rol', render: (r) => <Pill value={r.rol} text={ROL_LABEL[r.rol as Rol] ?? r.rol} /> },
-    { header: 'Estado', render: (r) => <Pill value={r.is_active ? 'ACTIVO' : 'INACTIVO'} text={r.is_active ? 'Activo' : 'Inactivo'} /> },
     { header: 'Último acceso', render: (r) => fechaHora(r.last_login) },
   ],
-  rowActions: (row, h) => [
-    { label: 'Restablecer contraseña', onClick: () => h.show(<ResetPasswordDialog user={row} onClose={() => h.show(null)} />) },
-  ],
+  rowActions: (row, h, u) =>
+    canManage(u)
+      ? [{ label: 'Restablecer contraseña', onClick: () => h.show(<ResetPasswordDialog user={row} onClose={() => h.show(null)} />) }]
+      : [],
 }
 
 const proyectos: ResourceConfig = {

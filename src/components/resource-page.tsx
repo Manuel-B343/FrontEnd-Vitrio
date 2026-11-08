@@ -59,6 +59,8 @@ export interface ResourceConfig {
   deleteNote?: string
   rowActions?: (row: Row, h: Helpers, u: Perfil) => RowAction[]
   onSaved?: (result: Row, created: boolean, h: Helpers) => void
+  /** Ajusta el cuerpo justo antes de enviarlo (por ejemplo, campos ocultos que el servidor exige). */
+  prepareBody?: (body: Row, values: Values, user: Perfil) => Row
 }
 
 function useDebounced<T>(v: T, ms = 300) {
@@ -139,7 +141,7 @@ function FormDialog({ cfg, row, onClose, onSaved }: {
       if (Object.keys(local).length) throw Object.assign(new Error('local'), { local })
       return api<Row>(editing ? `/${cfg.path}/${row![cfg.idKey]}/` : `/${cfg.path}/`, {
         method: editing ? 'PATCH' : 'POST',
-        body,
+        body: cfg.prepareBody ? cfg.prepareBody(body, values, user!) : body,
       })
     },
     onSuccess: (r) => onSaved(r, !editing),
@@ -149,8 +151,19 @@ function FormDialog({ cfg, row, onClose, onSaved }: {
         return
       }
       if (e instanceof ApiError) {
-        setErrors(fieldErrors(e))
-        setGeneral(e.codigo === 'validacion' ? '' : e.message)
+        // Los errores de campos que no se ven en pantalla van al mensaje general.
+        const ctx = { user: user!, values, editing }
+        const visible = new Set(
+          cfg.fields.filter((f) => !f.hide?.(ctx) && !(editing && f.createOnly)).map((f) => f.name),
+        )
+        const own: Record<string, string> = {}
+        const extra: string[] = []
+        for (const [k, v] of Object.entries(fieldErrors(e))) {
+          if (visible.has(k)) own[k] = v
+          else extra.push(k === 'non_field_errors' ? v : `${k}: ${v}`)
+        }
+        setErrors(own)
+        setGeneral(e.codigo === 'validacion' ? extra.join(' ') : e.message)
       } else setGeneral('Error inesperado.')
     },
   })
@@ -418,7 +431,7 @@ export function ResourcePage({ cfg }: { cfg: ResourceConfig }) {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar {cfg.singular}?</AlertDialogTitle>
             <AlertDialogDescription>
-              {cfg.deleteNote ?? 'Esta acción no se puede deshacer. Si tiene elementos dependientes, el servidor la rechazará.'}
+              {cfg.deleteNote ?? 'El registro se eliminará de las listas. Si tiene elementos dependientes, el servidor rechazará la acción.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
