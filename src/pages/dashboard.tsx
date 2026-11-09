@@ -2,7 +2,8 @@ import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import {
-  AlertTriangle, Building2, FileVideo, FolderKanban, MonitorSmartphone, Users, type LucideIcon,
+  AlertTriangle, ArrowRight, Building2, CheckCircle2, Clock, FileVideo, FolderKanban, MonitorSmartphone, Radio, Users,
+  type LucideIcon,
 } from 'lucide-react'
 import { api, type Page } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
@@ -61,38 +62,79 @@ function contar(rows: Row[], campo: string) {
   return out
 }
 
+const pct = (n: number, total: number) => (total ? `${((n / total) * 100).toFixed(1)}%` : '0%')
+
 /* ---------- Piezas ---------- */
 
 function Stat({ title, value, loading, icon: Icon, to, hint }: {
   title: string; value?: number | string; loading?: boolean; icon: LucideIcon; to?: string; hint?: string
 }) {
   const body = (
-    <Card className="h-full transition-colors hover:bg-muted/50">
+    <Card className="h-full transition-colors hover:ring-blue-400/30">
       <CardContent>
-        <div className="mb-3 flex items-center justify-between">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <Icon className="size-4 text-blue-400" />
+        <div className="mb-5 flex items-center justify-between">
+          <p className="etiqueta">{title}</p>
+          <span className="flex size-9 items-center justify-center rounded-lg bg-[#162238] text-blue-300 ring-1 ring-white/10">
+            <Icon className="size-4" />
+          </span>
         </div>
-        {loading ? <Skeleton className="h-8 w-14" /> : <p className="text-3xl font-semibold">{value ?? '—'}</p>}
-        {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+        {loading ? <Skeleton className="h-9 w-16" /> : <p className="mono text-4xl font-semibold tracking-tight">{value ?? '—'}</p>}
+        {hint && <p className="mono mt-2 text-xs text-muted-foreground">{hint}</p>}
       </CardContent>
     </Card>
   )
   return to ? <Link to={to}>{body}</Link> : body
 }
 
-function Panel({ title, description, children, to }: { title: string; description?: string; children: ReactNode; to?: string }) {
+function Atencion({ sinConexion, loading }: { sinConexion: number; loading: boolean }) {
+  const mal = sinConexion > 0
   return (
-    <Card>
+    <Link to="/dispositivos">
+      <Card className={`h-full transition-colors ${mal ? 'bg-gradient-to-br from-amber-500/10 to-card ring-amber-400/25 hover:ring-amber-400/50' : 'hover:ring-emerald-400/30'}`}>
+        <CardContent>
+          <div className="mb-5 flex items-center justify-between">
+            <p className={`etiqueta flex items-center gap-2 ${mal ? 'text-amber-300' : 'text-emerald-300'}`}>
+              <span className="size-1.5 rounded-full bg-current shadow-[0_0_8px_currentColor]" />
+              {mal ? 'Atención requerida' : 'Sin incidencias'}
+            </p>
+            <span className={`flex size-9 items-center justify-center rounded-lg ring-1 ${mal ? 'bg-amber-400/10 text-amber-300 ring-amber-400/25' : 'bg-emerald-400/10 text-emerald-300 ring-emerald-400/25'}`}>
+              {mal ? <AlertTriangle className="size-4" /> : <CheckCircle2 className="size-4" />}
+            </span>
+          </div>
+          {loading ? (
+            <Skeleton className="h-9 w-16" />
+          ) : (
+            <p className="text-4xl font-semibold tracking-tight">
+              <span className="mono">{sinConexion}</span>
+              <span className="ml-2 text-base font-normal text-muted-foreground">sin conexión</span>
+            </p>
+          )}
+          <p className="mono mt-2 flex items-center justify-between text-xs text-muted-foreground">
+            {mal ? 'Revisa estas pantallas' : 'Todas las pantallas responden'} <ArrowRight className="size-3.5" />
+          </p>
+        </CardContent>
+      </Card>
+    </Link>
+  )
+}
+
+function Panel({ title, description, children, to, icon: Icon, className }: {
+  title: string; description?: string; children: ReactNode; to?: string; icon?: LucideIcon; className?: string
+}) {
+  return (
+    <Card className={className}>
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <div>
-            <CardTitle>{title}</CardTitle>
-            {description && <CardDescription>{description}</CardDescription>}
+            <CardTitle className="flex items-center gap-2 text-base">
+              {Icon && <Icon className="size-4 text-blue-300" />}
+              {title}
+            </CardTitle>
+            {description && <CardDescription className="etiqueta mt-1">{description}</CardDescription>}
           </div>
           {to && (
-            <Link to={to} className="text-xs text-blue-400 hover:underline">
-              Ver todo
+            <Link to={to} className="mono flex shrink-0 items-center gap-1 text-xs text-blue-300 hover:text-blue-200">
+              Ver todo <ArrowRight className="size-3.5" />
             </Link>
           )}
         </div>
@@ -106,34 +148,135 @@ function Vacio({ text }: { text: string }) {
   return <p className="py-6 text-center text-sm text-muted-foreground">{text}</p>
 }
 
-function Barras({ datos, etiquetas }: { datos: Record<string, number>; etiquetas: Record<string, string> }) {
-  const entradas = Object.entries(datos).sort((a, b) => b[1] - a[1])
-  const max = Math.max(1, ...entradas.map(([, n]) => n))
-  if (!entradas.length) return <Vacio text="Sin datos todavía." />
+/* Estado de la red de pantallas: barra segmentada con datos reales */
+function EstadoRed({ dispositivos, total, loading }: { dispositivos?: Row[]; total?: number; loading: boolean }) {
+  const por = contar(dispositivos ?? [], 'estado')
+  const n = dispositivos?.length ?? 0
+  const filas = [
+    { k: 'ACTIVO', label: 'Activas', color: '#10b981' },
+    { k: 'SIN_CONEXION', label: 'Sin conexión', color: '#f59e0b' },
+    { k: 'INACTIVO', label: 'Inactivas', color: '#64748b' },
+  ]
   return (
-    <ul className="grid gap-3">
-      {entradas.map(([estado, n]) => (
-        <li key={estado} className="grid gap-1.5">
-          <div className="flex items-center justify-between text-sm">
-            <span>{etiquetas[estado] ?? estado}</span>
-            <span className="font-medium tabular-nums">{n}</span>
-          </div>
-          <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
-            <div
-              className="h-full rounded-full"
-              style={{ width: `${(n / max) * 100}%`, background: ESTADO_COLOR[estado] ?? '#94a3b8' }}
-            />
-          </div>
-        </li>
-      ))}
-    </ul>
+    <Card className="lg:col-span-2">
+      <CardContent>
+        {loading ? (
+          <Skeleton className="h-48 w-full" />
+        ) : (
+          <>
+            <p className="etiqueta flex items-center gap-2">
+              <span className="size-1.5 animate-[pulse-dot_1.6s_infinite] rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
+              Estado de la red de pantallas
+            </p>
+            <p className="mt-3 flex items-baseline gap-3">
+              <span className="mono text-5xl font-semibold tracking-tight">{total ?? 0}</span>
+              <span className="etiqueta">pantallas registradas</span>
+            </p>
+            <div className="mt-6 flex h-2.5 gap-0.5 overflow-hidden rounded-full bg-white/[0.06]">
+              {filas.map((f) => (
+                <div
+                  key={f.k}
+                  className="h-full transition-[width] duration-700"
+                  style={{ width: pct(por[f.k] ?? 0, n), background: f.color, boxShadow: `0 0 10px ${f.color}66` }}
+                />
+              ))}
+            </div>
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              {filas.map((f) => (
+                <div key={f.k} className="rounded-lg border border-white/[0.06] bg-[#070d18] p-3">
+                  <p className="etiqueta flex items-center gap-2 text-foreground/80">
+                    <span className="size-1.5 rounded-full" style={{ background: f.color, boxShadow: `0 0 8px ${f.color}` }} />
+                    {f.label}
+                  </p>
+                  <p className="mt-2 flex items-baseline gap-2">
+                    <span className="mono text-2xl font-semibold" style={{ color: f.color }}>{por[f.k] ?? 0}</span>
+                    <span className="mono text-xs text-muted-foreground">({pct(por[f.k] ?? 0, n)})</span>
+                  </p>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   )
 }
 
-function ProyectosPorEstado({ proyectos, loading }: { proyectos?: Row[]; loading: boolean }) {
+function Pantallas({ dispositivos, loading, titulo = 'Última actividad' }: { dispositivos?: Row[]; loading: boolean; titulo?: string }) {
+  const lista = [...(dispositivos ?? [])]
+    .sort((a, b) => (b.ultima_conexion ?? '').localeCompare(a.ultima_conexion ?? ''))
+    .slice(0, 5)
   return (
-    <Panel title="Proyectos por estado" to="/proyectos">
-      {loading ? <Skeleton className="h-32 w-full" /> : <Barras datos={contar(proyectos ?? [], 'estado')} etiquetas={ESTADO_PROYECTO} />}
+    <Panel title={titulo} description="Última conexión por pantalla" to="/dispositivos" icon={Radio}>
+      {loading ? (
+        <Skeleton className="h-40 w-full" />
+      ) : lista.length === 0 ? (
+        <Vacio text="No hay dispositivos registrados." />
+      ) : (
+        <ul className="grid gap-2">
+          {lista.map((d) => {
+            const c = ESTADO_COLOR[d.estado] ?? '#94a3b8'
+            return (
+              <li
+                key={d.id_dispositivo}
+                className="flex items-center justify-between gap-3 rounded-lg border border-white/[0.05] bg-[#070d18] px-3 py-2.5"
+                style={d.estado === 'SIN_CONEXION' ? { borderColor: c + '40', background: c + '12' } : undefined}
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="size-2 shrink-0 rounded-full" style={{ background: c, boxShadow: `0 0 8px ${c}` }} />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{d.nombre}</p>
+                    <p className="mono truncate text-[0.68rem] text-muted-foreground">
+                      {d.ubicacion ? `${d.ubicacion} · ` : ''}{hace(d.ultima_conexion)}
+                    </p>
+                  </div>
+                </div>
+                <Pill value={d.estado} text={ESTADO_DISPOSITIVO[d.estado] ?? d.estado} />
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </Panel>
+  )
+}
+
+function ProyectosPorEstado({ proyectos, loading, total }: { proyectos?: Row[]; loading: boolean; total?: number }) {
+  const por = contar(proyectos ?? [], 'estado')
+  const max = Math.max(1, ...Object.values(por))
+  return (
+    <Panel
+      title="Proyectos por estado del ciclo de vida"
+      description={`${total ?? 0} proyectos en total`}
+      to="/proyectos"
+      icon={FolderKanban}
+      className="lg:col-span-3"
+    >
+      {loading ? (
+        <Skeleton className="h-64 w-full" />
+      ) : (
+        <ul className="grid gap-2.5">
+          {Object.keys(ESTADO_PROYECTO).map((estado, i) => {
+            const n = por[estado] ?? 0
+            const c = ESTADO_COLOR[estado] ?? '#94a3b8'
+            return (
+              <li key={estado} className={`grid grid-cols-[9rem_1fr_2rem] items-center gap-3 text-sm ${n ? '' : 'opacity-45'}`}>
+                <span className="flex items-center gap-2 truncate">
+                  <span className="size-2 rounded-[3px]" style={{ background: c }} />
+                  <span className="mono text-xs text-muted-foreground">{i + 1}.</span> {ESTADO_PROYECTO[estado]}
+                </span>
+                <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+                  <div
+                    className="h-full rounded-full transition-[width] duration-700"
+                    style={{ width: `${(n / max) * 100}%`, background: `linear-gradient(90deg, ${c}99, ${c})`, boxShadow: `0 0 10px ${c}55` }}
+                  />
+                </div>
+                <span className="mono text-right font-medium">{n}</span>
+              </li>
+            )
+          })}
+        </ul>
+      )}
     </Panel>
   )
 }
@@ -144,30 +287,34 @@ function ProximasEntregas({ proyectos, loading }: { proyectos?: Row[]; loading: 
     .sort((a, b) => parseFecha(a.fecha_entrega).getTime() - parseFecha(b.fecha_entrega).getTime())
     .slice(0, 5)
   return (
-    <Panel title="Próximas entregas" description="Proyectos sin cerrar, por fecha de entrega" to="/proyectos">
+    <Panel title="Próximas entregas" description="Proyectos sin cerrar" to="/proyectos" icon={Clock} className="lg:col-span-2">
       {loading ? (
-        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-40 w-full" />
       ) : proximos.length === 0 ? (
         <Vacio text="No hay entregas pendientes." />
       ) : (
-        <ul className="divide-y divide-white/[0.06]">
+        <ul className="grid gap-2">
           {proximos.map((p) => {
             const d = diasHasta(p.fecha_entrega)
+            const tono = d < 0 ? 'rojo' : d <= 7 ? 'ambar' : 'normal'
             return (
-              <li key={p.id_proyecto} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+              <li
+                key={p.id_proyecto}
+                className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-sm ${
+                  tono === 'rojo' ? 'border-red-400/25 bg-red-500/10' : tono === 'ambar' ? 'border-amber-400/25 bg-amber-400/10' : 'border-white/[0.05] bg-[#070d18]'
+                }`}
+              >
                 <div className="min-w-0">
                   <p className="truncate font-medium">{p.nombre}</p>
-                  <p className="text-xs text-muted-foreground">{parseFecha(p.fecha_entrega).toLocaleDateString('es')}</p>
+                  <p className="mono text-[0.68rem] text-muted-foreground">{parseFecha(p.fecha_entrega).toLocaleDateString('es')}</p>
                 </div>
-                {d < 0 ? (
-                  <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-red-400">
-                    <AlertTriangle className="size-3.5" /> Vencido hace {Math.abs(d)} d
-                  </span>
-                ) : (
-                  <span className={`shrink-0 text-xs font-semibold ${d <= 7 ? 'text-amber-400' : 'text-muted-foreground'}`}>
-                    {d === 0 ? 'Hoy' : `En ${d} d`}
-                  </span>
-                )}
+                <span
+                  className={`mono flex shrink-0 items-center gap-1 rounded-md px-2 py-0.5 text-[0.68rem] font-medium uppercase ${
+                    tono === 'rojo' ? 'bg-red-500/20 text-red-300' : tono === 'ambar' ? 'bg-amber-400/15 text-amber-300' : 'bg-blue-400/10 text-blue-300'
+                  }`}
+                >
+                  {d < 0 ? <><AlertTriangle className="size-3" /> Vencido hace {Math.abs(d)} d</> : d === 0 ? 'Hoy' : `En ${d} d`}
+                </span>
               </li>
             )
           })}
@@ -177,66 +324,49 @@ function ProximasEntregas({ proyectos, loading }: { proyectos?: Row[]; loading: 
   )
 }
 
-function Pantallas({ dispositivos, loading, titulo = 'Pantallas' }: { dispositivos?: Row[]; loading: boolean; titulo?: string }) {
-  const lista = [...(dispositivos ?? [])]
-    .sort((a, b) => (b.ultima_conexion ?? '').localeCompare(a.ultima_conexion ?? ''))
-    .slice(0, 6)
+function Equipo({ usuarios, total, loading }: { usuarios?: Row[]; total?: number; loading: boolean }) {
+  const por = contar(usuarios ?? [], 'rol')
+  const n = usuarios?.length ?? 0
+  const roles = Object.entries(por)
+  let acum = 0
+  const tramos = roles.map(([rol, c]) => {
+    const ini = acum
+    acum += (c / Math.max(1, n)) * 360
+    return `${ESTADO_COLOR[rol] ?? '#94a3b8'} ${ini}deg ${acum}deg`
+  })
   return (
-    <Panel title={titulo} description="Última conexión de cada dispositivo" to="/dispositivos">
+    <Panel title="Usuarios por rol" description={`Total: ${total ?? 0}`} to="/usuarios" icon={Users} className="lg:col-span-2">
       {loading ? (
         <Skeleton className="h-32 w-full" />
-      ) : lista.length === 0 ? (
-        <Vacio text="No hay dispositivos registrados." />
+      ) : n === 0 ? (
+        <Vacio text="Sin usuarios." />
       ) : (
-        <ul className="divide-y divide-white/[0.06]">
-          {lista.map((d) => (
-            <li key={d.id_dispositivo} className="flex items-center justify-between gap-3 py-2.5 text-sm">
-              <div className="min-w-0">
-                <p className="truncate font-medium">{d.nombre}</p>
-                <p className="text-xs text-muted-foreground">
-                  {d.ubicacion ? `${d.ubicacion} · ` : ''}
-                  {hace(d.ultima_conexion)}
-                </p>
-              </div>
-              <Pill value={d.estado} text={ESTADO_DISPOSITIVO[d.estado] ?? d.estado} />
-            </li>
-          ))}
-        </ul>
-      )}
-    </Panel>
-  )
-}
-
-function EstadoPantallas({ dispositivos, loading }: { dispositivos?: Row[]; loading: boolean }) {
-  return (
-    <Panel title="Dispositivos por estado" to="/dispositivos">
-      {loading ? <Skeleton className="h-32 w-full" /> : <Barras datos={contar(dispositivos ?? [], 'estado')} etiquetas={ESTADO_DISPOSITIVO} />}
-    </Panel>
-  )
-}
-
-function Equipo({ usuarios, loading }: { usuarios?: Row[]; loading: boolean }) {
-  const por = contar(usuarios ?? [], 'rol')
-  return (
-    <Panel title="Usuarios por rol" to="/usuarios">
-      {loading ? (
-        <Skeleton className="h-24 w-full" />
-      ) : (
-        <ul className="grid gap-2.5 text-sm">
-          {Object.entries(por).map(([rol, n]) => (
-            <li key={rol} className="flex items-center justify-between">
-              <Pill value={rol} text={ROL_LABEL[rol as keyof typeof ROL_LABEL] ?? rol} />
-              <span className="font-medium tabular-nums">{n}</span>
-            </li>
-          ))}
-          {!usuarios?.length && <Vacio text="Sin usuarios." />}
-        </ul>
+        <div className="flex items-center gap-5">
+          <div
+            className="relative size-28 shrink-0 rounded-full"
+            style={{ background: `conic-gradient(${tramos.join(', ')})` }}
+          >
+            <div className="absolute inset-[10px] flex flex-col items-center justify-center rounded-full bg-card">
+              <span className="mono text-2xl font-semibold">{total ?? n}</span>
+              <span className="etiqueta text-[0.58rem]">usuarios</span>
+            </div>
+          </div>
+          <ul className="grid flex-1 gap-2 text-sm">
+            {roles.map(([rol, c]) => (
+              <li key={rol} className="flex items-center justify-between gap-2">
+                <Pill value={rol} text={ROL_LABEL[rol as keyof typeof ROL_LABEL] ?? rol} />
+                <span className="mono text-xs">{c} <span className="text-muted-foreground">({pct(c, n)})</span></span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </Panel>
   )
 }
 
 const activos = (p?: Row[]) => (p ?? []).filter((x) => !FINALIZADOS.includes(x.estado)).length
+const sinConexion = (d?: Row[]) => (d ?? []).filter((x) => x.estado === 'SIN_CONEXION').length
 
 /* ---------- Vistas por rol ---------- */
 
@@ -245,23 +375,26 @@ function DashboardAdministrador() {
   const dispositivos = useList('dispositivos', { page_size: 100 })
   const usuarios = useList('usuarios', { page_size: 100 })
   const clientes = useCount('clientes')
-  const sinConexion = (dispositivos.data?.results ?? []).filter((d) => d.estado === 'SIN_CONEXION').length
 
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat title="Clientes" icon={Building2} to="/clientes" loading={clientes.loading} value={clientes.value} />
-        <Stat title="Usuarios" icon={Users} to="/usuarios" loading={usuarios.isLoading} value={usuarios.data?.count} />
-        <Stat title="Proyectos en curso" icon={FolderKanban} to="/proyectos" loading={proyectos.isLoading}
-          value={activos(proyectos.data?.results)} hint={`${proyectos.data?.count ?? 0} en total`} />
-        <Stat title="Dispositivos" icon={MonitorSmartphone} to="/dispositivos" loading={dispositivos.isLoading}
-          value={dispositivos.data?.count} hint={sinConexion ? `${sinConexion} sin conexión` : 'Todos con conexión'} />
+      <div className="aparecer grid gap-4 lg:grid-cols-3">
+        <EstadoRed dispositivos={dispositivos.data?.results} total={dispositivos.data?.count} loading={dispositivos.isLoading} />
+        <Pantallas dispositivos={dispositivos.data?.results} loading={dispositivos.isLoading} />
       </div>
-      <div className="grid gap-4 lg:grid-cols-2">
-        <ProyectosPorEstado proyectos={proyectos.data?.results} loading={proyectos.isLoading} />
-        <ProximasEntregas proyectos={proyectos.data?.results} loading={proyectos.isLoading} />
-        <EstadoPantallas dispositivos={dispositivos.data?.results} loading={dispositivos.isLoading} />
-        <Equipo usuarios={usuarios.data?.results} loading={usuarios.isLoading} />
+      <div className="aparecer grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Stat title="Empresas clientes" icon={Building2} to="/clientes" loading={clientes.loading} value={clientes.value} />
+        <Stat title="Usuarios del sistema" icon={Users} to="/usuarios" loading={usuarios.isLoading} value={usuarios.data?.count} />
+        <Stat title="Proyectos en curso" icon={FolderKanban} to="/proyectos" loading={proyectos.isLoading}
+          value={activos(proyectos.data?.results)} hint={`De ${proyectos.data?.count ?? 0} en la plataforma`} />
+        <Atencion sinConexion={sinConexion(dispositivos.data?.results)} loading={dispositivos.isLoading} />
+      </div>
+      <div className="aparecer grid gap-4 lg:grid-cols-5">
+        <ProyectosPorEstado proyectos={proyectos.data?.results} total={proyectos.data?.count} loading={proyectos.isLoading} />
+        <div className="grid gap-4 lg:col-span-2 lg:content-start">
+          <ProximasEntregas proyectos={proyectos.data?.results} loading={proyectos.isLoading} />
+          <Equipo usuarios={usuarios.data?.results} total={usuarios.data?.count} loading={usuarios.isLoading} />
+        </div>
       </div>
     </>
   )
@@ -275,18 +408,20 @@ function DashboardAdminCliente() {
 
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="aparecer grid gap-4 lg:grid-cols-3">
+        <EstadoRed dispositivos={dispositivos.data?.results} total={dispositivos.data?.count} loading={dispositivos.isLoading} />
+        <Pantallas dispositivos={dispositivos.data?.results} loading={dispositivos.isLoading} titulo="Mis pantallas" />
+      </div>
+      <div className="aparecer grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Stat title="Proyectos en curso" icon={FolderKanban} to="/proyectos" loading={proyectos.isLoading}
           value={activos(proyectos.data?.results)} hint={`${proyectos.data?.count ?? 0} en total`} />
-        <Stat title="Dispositivos" icon={MonitorSmartphone} to="/dispositivos" loading={dispositivos.isLoading} value={dispositivos.data?.count} />
         <Stat title="Archivos" icon={FileVideo} to="/archivos" loading={archivos.loading} value={archivos.value} />
         <Stat title="Mi equipo" icon={Users} to="/usuarios" loading={usuarios.loading} value={usuarios.value} hint="Usuarios de tu empresa" />
+        <Atencion sinConexion={sinConexion(dispositivos.data?.results)} loading={dispositivos.isLoading} />
       </div>
-      <div className="grid gap-4 lg:grid-cols-2">
-        <ProyectosPorEstado proyectos={proyectos.data?.results} loading={proyectos.isLoading} />
+      <div className="aparecer grid gap-4 lg:grid-cols-5">
+        <ProyectosPorEstado proyectos={proyectos.data?.results} total={proyectos.data?.count} loading={proyectos.isLoading} />
         <ProximasEntregas proyectos={proyectos.data?.results} loading={proyectos.isLoading} />
-        <Pantallas dispositivos={dispositivos.data?.results} loading={dispositivos.isLoading} titulo="Mis pantallas" />
-        <EstadoPantallas dispositivos={dispositivos.data?.results} loading={dispositivos.isLoading} />
       </div>
     </>
   )
@@ -299,15 +434,18 @@ function DashboardCliente() {
 
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="aparecer grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Stat title="Mis proyectos" icon={FolderKanban} to="/proyectos" loading={proyectos.isLoading}
           value={proyectos.data?.count} hint={`${activos(proyectos.data?.results)} en curso`} />
         <Stat title="Mis pantallas" icon={MonitorSmartphone} to="/dispositivos" loading={dispositivos.isLoading} value={dispositivos.data?.count} />
         <Stat title="Archivos" icon={FileVideo} to="/archivos" loading={archivos.loading} value={archivos.value} />
+        <Atencion sinConexion={sinConexion(dispositivos.data?.results)} loading={dispositivos.isLoading} />
       </div>
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="aparecer grid gap-4 lg:grid-cols-5">
         <ProximasEntregas proyectos={proyectos.data?.results} loading={proyectos.isLoading} />
-        <Pantallas dispositivos={dispositivos.data?.results} loading={dispositivos.isLoading} titulo="Mis pantallas" />
+        <div className="lg:col-span-3">
+          <Pantallas dispositivos={dispositivos.data?.results} loading={dispositivos.isLoading} titulo="Mis pantallas" />
+        </div>
       </div>
     </>
   )
@@ -317,17 +455,27 @@ export default function Dashboard() {
   const { user } = useAuth()
   if (!user) return null
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Hola, {user.first_name || user.username}</h1>
-        <p className="text-sm text-muted-foreground">
-          {user.rol === 'ADMINISTRADOR'
-            ? 'Vista general de toda la plataforma.'
-            : user.rol === 'ADMINISTRADOR_CLIENTE'
-              ? 'Resumen de tu empresa: proyectos, pantallas y equipo.'
-              : 'Resumen de tus proyectos y pantallas.'}
-        </p>
-      </div>
+    <div className="space-y-4">
+      <Card>
+        <CardContent>
+          <p className="etiqueta flex flex-wrap items-center gap-x-2">
+            <span className="size-1.5 animate-[pulse-dot_1.6s_infinite] rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
+            <span className="text-emerald-300">Sesión activa</span>
+            <span className="text-white/20">/</span>
+            <span>Rol: {ROL_LABEL[user.rol]}</span>
+            <span className="text-white/20">·</span>
+            <span>{new Date().toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+          </p>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight">Hola, {user.first_name || user.username}</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            {user.rol === 'ADMINISTRADOR'
+              ? 'Vista general de toda la plataforma.'
+              : user.rol === 'ADMINISTRADOR_CLIENTE'
+                ? 'Resumen de tu empresa: proyectos, pantallas y equipo.'
+                : 'Resumen de tus proyectos y pantallas.'}
+          </p>
+        </CardContent>
+      </Card>
       {user.rol === 'ADMINISTRADOR' ? <DashboardAdministrador /> : user.rol === 'ADMINISTRADOR_CLIENTE' ? <DashboardAdminCliente /> : <DashboardCliente />}
     </div>
   )

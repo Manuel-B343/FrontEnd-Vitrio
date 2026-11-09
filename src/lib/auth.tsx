@@ -26,7 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (username: string, password: string) => {
     const data = await api<{ access: string; refresh: string; usuario: Perfil }>('/auth/login/', {
-      method: 'POST', body: { username, password }, auth: false,
+      method: 'POST', body: { username: username.trim().toLowerCase(), password }, auth: false,
     })
     tokens.set(data.access, data.refresh)
     setUser(data.usuario)

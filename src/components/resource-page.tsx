@@ -296,7 +296,7 @@ export function ResourcePage({ cfg }: { cfg: ResourceConfig }) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{cfg.title}</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">{cfg.title}</h1>
           {cfg.description && <p className="text-sm text-muted-foreground">{cfg.description}</p>}
         </div>
         {canWrite && (
