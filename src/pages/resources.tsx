@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ResourcePage, type Field, type ResourceConfig } from '@/components/resource-page'
+import { Pill } from '@/components/pill'
 
 type Row = Record<string, any>
 
@@ -40,25 +41,6 @@ const TIPO_ARCHIVO = [...TIPO_PLANTILLA.slice(0, 3), { value: 'PAQUETE', label: 
 const ESTADO_PLANTILLA = opts([['ACTIVA', 'Activa'], ['INACTIVA', 'Inactiva'], ['DEPRECADA', 'Deprecada']])
 const ESTADO_DISPOSITIVO = opts([['ACTIVO', 'Activo'], ['INACTIVO', 'Inactivo'], ['SIN_CONEXION', 'Sin conexión']])
 const label = (list: { value: string; label: string }[], v: string) => list.find((o) => o.value === v)?.label ?? v
-
-const BADGE: Record<string, string> = {
-  PROPUESTO: '#94a3b8', ANALISIS: '#fbbf24', APROBADO: '#34d399', PLANIFICACION: '#60a5fa', EJECUCION: '#3b82f6',
-  SEGUIMIENTO: '#a78bfa', PAUSADO: '#fbbf24', CANCELADO: '#f87171', ACTIVA: '#34d399', INACTIVA: '#f87171',
-  DEPRECADA: '#64748b', COMPLETADO: '#34d399', CERRADO: '#64748b', ACTIVO: '#34d399', INACTIVO: '#f87171', SIN_CONEXION: '#fbbf24',
-  ADMINISTRADOR: '#818cf8', ADMINISTRADOR_CLIENTE: '#a78bfa', CLIENTE: '#60a5fa',
-}
-
-function Pill({ value, text }: { value: string; text: string }) {
-  const c = BADGE[value] ?? '#94a3b8'
-  return (
-    <span
-      className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
-      style={{ color: c, background: c + '26', borderColor: c + '4d' }}
-    >
-      {text}
-    </span>
-  )
-}
 
 function EstadoBadge({ value, list }: { value: string; list: { value: string; label: string }[] }) {
   return <Pill value={value} text={label(list, value)} />

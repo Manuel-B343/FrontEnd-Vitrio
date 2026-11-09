@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { AuthProvider, useAuth } from '@/lib/auth'
-import Layout from '@/components/layout'
+import Layout, { NAV } from '@/components/layout'
 import Login from '@/pages/login'
 import Dashboard from '@/pages/dashboard'
 import Profile from '@/pages/profile'
@@ -12,6 +12,14 @@ import { RESOURCES, ResourceRoute } from '@/pages/resources'
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } },
 })
+
+// Evita entrar por URL a secciones que el menú oculta para el rol.
+function PorRol({ path, children }: { path: string; children: React.ReactNode }) {
+  const { user } = useAuth()
+  const item = NAV.find((n) => n.to === path)
+  if (user && item && !item.roles.includes(user.rol)) return <Navigate to="/" replace />
+  return <>{children}</>
+}
 
 function Protected() {
   const { user, loading } = useAuth()
@@ -31,7 +39,7 @@ export default function App() {
               <Route element={<Protected />}>
                 <Route index element={<Dashboard />} />
                 {Object.keys(RESOURCES).map((name) => (
-                  <Route key={name} path={name} element={<ResourceRoute name={name} />} />
+                  <Route key={name} path={name} element={<PorRol path={`/${name}`}><ResourceRoute name={name} /></PorRol>} />
                 ))}
                 <Route path="perfil" element={<Profile />} />
               </Route>

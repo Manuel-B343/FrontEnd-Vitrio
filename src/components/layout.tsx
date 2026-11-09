@@ -6,20 +6,24 @@ import {
 } from 'lucide-react'
 import { Logo, LogoMark } from '@/components/logo'
 import { useAuth } from '@/lib/auth'
-import { ROL_LABEL } from '@/lib/types'
+import { ROL_LABEL, type Rol } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { Separator } from '@/components/ui/separator'
 
-const NAV: { to: string; label: string; icon: LucideIcon; end?: boolean }[] = [
-  { to: '/', label: 'Resumen', icon: LayoutDashboard, end: true },
-  { to: '/clientes', label: 'Clientes', icon: Building2 },
-  { to: '/usuarios', label: 'Usuarios', icon: Users },
-  { to: '/proyectos', label: 'Proyectos', icon: FolderKanban },
-  { to: '/plantillas', label: 'Plantillas', icon: LayoutTemplate },
-  { to: '/archivos', label: 'Archivos', icon: FileVideo },
-  { to: '/dispositivos', label: 'Dispositivos', icon: MonitorSmartphone },
+const TODOS: Rol[] = ['ADMINISTRADOR', 'ADMINISTRADOR_CLIENTE', 'CLIENTE']
+const GESTION: Rol[] = ['ADMINISTRADOR', 'ADMINISTRADOR_CLIENTE']
+
+// Solo oculta opciones: la regla real la aplica el servidor.
+export const NAV: { to: string; label: string; icon: LucideIcon; end?: boolean; roles: Rol[] }[] = [
+  { to: '/', label: 'Resumen', icon: LayoutDashboard, end: true, roles: TODOS },
+  { to: '/clientes', label: 'Clientes', icon: Building2, roles: GESTION },
+  { to: '/usuarios', label: 'Usuarios', icon: Users, roles: GESTION },
+  { to: '/proyectos', label: 'Proyectos', icon: FolderKanban, roles: TODOS },
+  { to: '/plantillas', label: 'Plantillas', icon: LayoutTemplate, roles: GESTION },
+  { to: '/archivos', label: 'Archivos', icon: FileVideo, roles: TODOS },
+  { to: '/dispositivos', label: 'Dispositivos', icon: MonitorSmartphone, roles: TODOS },
 ]
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
@@ -35,7 +39,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     <div className="flex h-full flex-col gap-2 p-3">
       <Logo size={26} className="px-2 py-3" />
       <nav className="mt-2 flex flex-1 flex-col gap-1">
-        {NAV.map(({ to, label, icon: Icon, end }) => (
+        {NAV.filter((n) => user && n.roles.includes(user.rol)).map(({ to, label, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end} className={link} onClick={onNavigate}>
             <Icon className="size-4" /> {label}
           </NavLink>
