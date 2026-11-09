@@ -11,6 +11,7 @@ import { ROL_LABEL } from '@/lib/types'
 import { ESTADO_COLOR, Pill } from '@/components/pill'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { MuroPantallas } from '@/components/muro'
 
 type Row = Record<string, any>
 
@@ -226,7 +227,7 @@ function Pantallas({ dispositivos, loading, titulo = 'Última actividad' }: { di
                   <span className="size-2 shrink-0 rounded-full" style={{ background: c, boxShadow: `0 0 8px ${c}` }} />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{d.nombre}</p>
-                    <p className="mono truncate text-[0.68rem] text-muted-foreground">
+                    <p className="mono truncate text-xs text-muted-foreground">
                       {d.ubicacion ? `${d.ubicacion} · ` : ''}{hace(d.ultima_conexion)}
                     </p>
                   </div>
@@ -306,10 +307,10 @@ function ProximasEntregas({ proyectos, loading }: { proyectos?: Row[]; loading: 
               >
                 <div className="min-w-0">
                   <p className="truncate font-medium">{p.nombre}</p>
-                  <p className="mono text-[0.68rem] text-muted-foreground">{parseFecha(p.fecha_entrega).toLocaleDateString('es')}</p>
+                  <p className="mono text-xs text-muted-foreground">{parseFecha(p.fecha_entrega).toLocaleDateString('es')}</p>
                 </div>
                 <span
-                  className={`mono flex shrink-0 items-center gap-1 rounded-md px-2 py-0.5 text-[0.68rem] font-medium uppercase ${
+                  className={`mono flex shrink-0 items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium uppercase ${
                     tono === 'rojo' ? 'bg-red-500/20 text-red-300' : tono === 'ambar' ? 'bg-amber-400/15 text-amber-300' : 'bg-blue-400/10 text-blue-300'
                   }`}
                 >
@@ -348,7 +349,7 @@ function Equipo({ usuarios, total, loading }: { usuarios?: Row[]; total?: number
           >
             <div className="absolute inset-[10px] flex flex-col items-center justify-center rounded-full bg-card">
               <span className="mono text-2xl font-semibold">{total ?? n}</span>
-              <span className="etiqueta text-[0.58rem]">usuarios</span>
+              <span className="etiqueta text-[0.7rem]">usuarios</span>
             </div>
           </div>
           <ul className="grid flex-1 gap-2 text-sm">
@@ -378,18 +379,18 @@ function DashboardAdministrador() {
 
   return (
     <>
-      <div className="aparecer grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-3">
         <EstadoRed dispositivos={dispositivos.data?.results} total={dispositivos.data?.count} loading={dispositivos.isLoading} />
         <Pantallas dispositivos={dispositivos.data?.results} loading={dispositivos.isLoading} />
       </div>
-      <div className="aparecer grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Stat title="Empresas clientes" icon={Building2} to="/clientes" loading={clientes.loading} value={clientes.value} />
         <Stat title="Usuarios del sistema" icon={Users} to="/usuarios" loading={usuarios.isLoading} value={usuarios.data?.count} />
         <Stat title="Proyectos en curso" icon={FolderKanban} to="/proyectos" loading={proyectos.isLoading}
           value={activos(proyectos.data?.results)} hint={`De ${proyectos.data?.count ?? 0} en la plataforma`} />
         <Atencion sinConexion={sinConexion(dispositivos.data?.results)} loading={dispositivos.isLoading} />
       </div>
-      <div className="aparecer grid gap-4 lg:grid-cols-5">
+      <div className="grid gap-4 lg:grid-cols-5">
         <ProyectosPorEstado proyectos={proyectos.data?.results} total={proyectos.data?.count} loading={proyectos.isLoading} />
         <div className="grid gap-4 lg:col-span-2 lg:content-start">
           <ProximasEntregas proyectos={proyectos.data?.results} loading={proyectos.isLoading} />
@@ -408,18 +409,18 @@ function DashboardAdminCliente() {
 
   return (
     <>
-      <div className="aparecer grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-3">
         <EstadoRed dispositivos={dispositivos.data?.results} total={dispositivos.data?.count} loading={dispositivos.isLoading} />
         <Pantallas dispositivos={dispositivos.data?.results} loading={dispositivos.isLoading} titulo="Mis pantallas" />
       </div>
-      <div className="aparecer grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Stat title="Proyectos en curso" icon={FolderKanban} to="/proyectos" loading={proyectos.isLoading}
           value={activos(proyectos.data?.results)} hint={`${proyectos.data?.count ?? 0} en total`} />
         <Stat title="Archivos" icon={FileVideo} to="/archivos" loading={archivos.loading} value={archivos.value} />
         <Stat title="Mi equipo" icon={Users} to="/usuarios" loading={usuarios.loading} value={usuarios.value} hint="Usuarios de tu empresa" />
         <Atencion sinConexion={sinConexion(dispositivos.data?.results)} loading={dispositivos.isLoading} />
       </div>
-      <div className="aparecer grid gap-4 lg:grid-cols-5">
+      <div className="grid gap-4 lg:grid-cols-5">
         <ProyectosPorEstado proyectos={proyectos.data?.results} total={proyectos.data?.count} loading={proyectos.isLoading} />
         <ProximasEntregas proyectos={proyectos.data?.results} loading={proyectos.isLoading} />
       </div>
@@ -434,14 +435,14 @@ function DashboardCliente() {
 
   return (
     <>
-      <div className="aparecer grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Stat title="Mis proyectos" icon={FolderKanban} to="/proyectos" loading={proyectos.isLoading}
           value={proyectos.data?.count} hint={`${activos(proyectos.data?.results)} en curso`} />
         <Stat title="Mis pantallas" icon={MonitorSmartphone} to="/dispositivos" loading={dispositivos.isLoading} value={dispositivos.data?.count} />
         <Stat title="Archivos" icon={FileVideo} to="/archivos" loading={archivos.loading} value={archivos.value} />
         <Atencion sinConexion={sinConexion(dispositivos.data?.results)} loading={dispositivos.isLoading} />
       </div>
-      <div className="aparecer grid gap-4 lg:grid-cols-5">
+      <div className="grid gap-4 lg:grid-cols-5">
         <ProximasEntregas proyectos={proyectos.data?.results} loading={proyectos.isLoading} />
         <div className="lg:col-span-3">
           <Pantallas dispositivos={dispositivos.data?.results} loading={dispositivos.isLoading} titulo="Mis pantallas" />
@@ -453,27 +454,45 @@ function DashboardCliente() {
 
 export default function Dashboard() {
   const { user } = useAuth()
+  const dispositivos = useList('dispositivos', { page_size: 100 })
   if (!user) return null
+  const pantallas = (dispositivos.data?.results ?? []).map((d) => ({ id: d.id_dispositivo, nombre: d.nombre, estado: d.estado }))
+  // Primero las que requieren atencion, luego las activas
+  const orden: Record<string, number> = { SIN_CONEXION: 0, ACTIVO: 1, INACTIVO: 2 }
+  pantallas.sort((a, b) => (orden[a.estado] ?? 3) - (orden[b.estado] ?? 3))
   return (
     <div className="space-y-4">
-      <Card>
+      <Card className="overflow-hidden">
         <CardContent>
-          <p className="etiqueta flex flex-wrap items-center gap-x-2">
-            <span className="size-1.5 animate-[pulse-dot_1.6s_infinite] rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
-            <span className="text-emerald-300">Sesión activa</span>
-            <span className="text-white/20">/</span>
-            <span>Rol: {ROL_LABEL[user.rol]}</span>
-            <span className="text-white/20">·</span>
-            <span>{new Date().toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
-          </p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight">Hola, {user.first_name || user.username}</h1>
-          <p className="mt-1.5 text-sm text-muted-foreground">
-            {user.rol === 'ADMINISTRADOR'
-              ? 'Vista general de toda la plataforma.'
-              : user.rol === 'ADMINISTRADOR_CLIENTE'
-                ? 'Resumen de tu empresa: proyectos, pantallas y equipo.'
-                : 'Resumen de tus proyectos y pantallas.'}
-          </p>
+          <div className="grid items-center gap-6 lg:grid-cols-[1fr_minmax(0,24rem)]">
+            <div>
+              <p className="etiqueta flex flex-wrap items-center gap-x-2">
+                <span className="size-1.5 animate-[pulse-dot_1.6s_infinite] rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
+                <span className="text-emerald-300">Sesión activa</span>
+                <span className="text-white/20">/</span>
+                <span>Rol: {ROL_LABEL[user.rol]}</span>
+              </p>
+              <h1 className="mt-3 text-4xl font-semibold tracking-tight">Hola, {user.first_name || user.username}</h1>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                {user.rol === 'ADMINISTRADOR'
+                  ? 'Vista general de toda la plataforma.'
+                  : user.rol === 'ADMINISTRADOR_CLIENTE'
+                    ? 'Resumen de tu empresa: proyectos, pantallas y equipo.'
+                    : 'Resumen de tus proyectos y pantallas.'}
+              </p>
+              <p className="mono mt-3 text-xs text-muted-foreground first-letter:uppercase">
+                {new Date().toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </p>
+            </div>
+            {pantallas.length > 0 && (
+              <div>
+                <MuroPantallas pantallas={pantallas} max={8} columnas={pantallas.length <= 4 ? 2 : pantallas.length <= 6 ? 3 : 4} />
+                <p className="mono mt-2 text-xs text-muted-foreground">
+                  {pantallas.filter((p) => p.estado === 'ACTIVO').length} de {pantallas.length} reproduciendo
+                </p>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
       {user.rol === 'ADMINISTRADOR' ? <DashboardAdministrador /> : user.rol === 'ADMINISTRADOR_CLIENTE' ? <DashboardAdminCliente /> : <DashboardCliente />}

@@ -318,7 +318,7 @@ export function ResourcePage({ cfg }: { cfg: ResourceConfig }) {
               {cfg.columns.map((c) => (
                 <TableHead key={c.header}>
                   {c.sort ? (
-                    <button className="inline-flex items-center gap-1 hover:text-foreground" onClick={() => toggleSort(c.sort!)}>
+                    <button className="-my-1.5 inline-flex items-center gap-1 py-1.5 hover:text-foreground" onClick={() => toggleSort(c.sort!)}>
                       {c.header}
                       {ordering === c.sort && <ArrowUp className="size-3" />}
                       {ordering === `-${c.sort}` && <ArrowDown className="size-3" />}

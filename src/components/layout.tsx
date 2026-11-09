@@ -49,7 +49,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     <div className="flex h-full flex-col p-3">
       <div className="px-2 pb-4 pt-2">
         <Logo size={28} />
-        <p className="etiqueta mt-2 pl-0.5 text-[0.6rem]">Sala de control</p>
+        <p className="etiqueta mt-2 pl-0.5">Sala de control</p>
       </div>
       <nav className="flex flex-1 flex-col gap-5 overflow-y-auto">
         {GRUPOS.map((g) => {
@@ -79,7 +79,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           </span>
           <span className="flex min-w-0 flex-col leading-tight">
             <span className="truncate text-sm font-medium">{user?.first_name || user?.username}</span>
-            <span className="etiqueta truncate text-[0.6rem] text-blue-300">{user && ROL_LABEL[user.rol]}</span>
+            <span className="etiqueta truncate text-blue-300">{user && ROL_LABEL[user.rol]}</span>
           </span>
         </NavLink>
         <Button variant="ghost" size="icon" aria-label="Cerrar sesión" className="text-muted-foreground" onClick={() => void logout()}>
@@ -94,6 +94,12 @@ export default function Layout() {
   const [open, setOpen] = useState(false)
   return (
     <div className="min-h-svh md:grid md:grid-cols-[260px_1fr]">
+      <a
+        href="#contenido"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-[#2563eb] focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white"
+      >
+        Saltar al contenido
+      </a>
       <aside className="sticky top-0 hidden h-svh border-r border-white/[0.07] bg-sidebar md:block">
         <Sidebar />
       </aside>
@@ -105,7 +111,7 @@ export default function Layout() {
           <LogoMark size={22} />
           <span className="font-bold tracking-[0.08em]">VITRIO</span>
         </header>
-        <main className="mx-auto w-full max-w-[1400px] flex-1 p-4 md:p-6">
+        <main id="contenido" className="mx-auto w-full max-w-[1400px] flex-1 p-4 md:p-6">
           <Outlet />
         </main>
       </div>

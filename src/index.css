@@ -130,9 +130,9 @@
 /* Rotulo tecnico: monoespaciado, mayusculas, tracking positivo */
 .etiqueta {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 500;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted-foreground);
 }
@@ -157,14 +157,80 @@
   mask-image: radial-gradient(ellipse at center, #000 25%, transparent 75%);
 }
 
-.aparecer > * {
-  animation: fadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+/* Muro de pantallas */
+.pantalla {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #070d18;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09);
+  animation: encender 0.7s ease-out both;
+  animation-delay: var(--e, 0ms);
 }
-.aparecer > *:nth-child(2) { animation-delay: 0.05s; }
-.aparecer > *:nth-child(3) { animation-delay: 0.1s; }
-.aparecer > *:nth-child(4) { animation-delay: 0.15s; }
-.aparecer > *:nth-child(5) { animation-delay: 0.2s; }
+.pantalla[data-estado='ACTIVO']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(60% 80% at 20% 30%, hsl(var(--h) 90% 62% / 0.75), transparent 70%),
+    linear-gradient(120deg, hsl(var(--h) 85% 45% / 0.55), hsl(calc(var(--h) + 28) 80% 35% / 0.25));
+  background-size: 220% 220%;
+  animation: contenido 9s ease-in-out infinite alternate;
+  animation-delay: var(--d, 0s);
+}
+.pantalla[data-estado='SIN_CONEXION'] {
+  background: repeating-linear-gradient(135deg, rgba(245, 158, 11, 0.22) 0 6px, rgba(245, 158, 11, 0.06) 6px 12px);
+  box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.5);
+  animation: encender 0.7s ease-out both, parpadeo 2.4s ease-in-out infinite;
+  animation-delay: var(--e, 0ms), var(--d, 0s);
+}
+.pantalla[data-estado='INACTIVO'] {
+  background: #0a1120;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+.pantalla-progreso {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  transform-origin: left;
+  background: rgba(255, 255, 255, 0.75);
+  display: none;
+}
+.pantalla[data-estado='ACTIVO'] .pantalla-progreso {
+  display: block;
+  animation: progreso 8s linear infinite;
+  animation-delay: var(--d, 0s);
+}
+
+@keyframes contenido {
+  from { background-position: 0% 40%; }
+  to { background-position: 100% 60%; }
+}
+@keyframes progreso {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes encender {
+  0% { opacity: 0; filter: brightness(2.2); }
+  100% { opacity: 1; filter: brightness(1); }
+}
+@keyframes parpadeo {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .aparecer > * { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

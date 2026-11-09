@@ -6,13 +6,15 @@ export const ESTADO_COLOR: Record<string, string> = {
 }
 
 const PULSAN = ['ACTIVO', 'ACTIVA']
+// Grises: el punto conserva el tono, el texto se aclara para cumplir contraste AA
+const TEXTO: Record<string, string> = { '#64748b': '#a3b1c6', '#94a3b8': '#b4c0d2' }
 
 export function Pill({ value, text }: { value: string; text: string }) {
   const c = ESTADO_COLOR[value] ?? '#94a3b8'
   return (
     <span
-      className="mono inline-flex h-[22px] items-center gap-1.5 rounded-md border px-2 text-[0.68rem] font-medium uppercase tracking-[0.04em]"
-      style={{ color: c, background: c + '1f', borderColor: c + '40' }}
+      className="mono inline-flex h-[22px] items-center gap-1.5 rounded-md border px-2 text-[0.72rem] font-medium uppercase tracking-[0.04em]"
+      style={{ color: TEXTO[c] ?? c, background: c + '1f', borderColor: c + '40' }}
     >
       <span
         className={`size-1.5 rounded-full ${PULSAN.includes(value) ? 'animate-[pulse-dot_1.6s_infinite]' : ''}`}

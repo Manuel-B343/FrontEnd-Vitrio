@@ -7,8 +7,13 @@ import { Logo, LogoMark } from '@/components/logo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { MuroPantallas } from '@/components/muro'
 
 const YEAR = new Date().getFullYear()
+
+const MURO = Array.from({ length: 40 }, (_, i) => ({
+  id: i, nombre: '', estado: i % 9 === 4 ? 'INACTIVO' : i % 13 === 6 ? 'SIN_CONEXION' : 'ACTIVO',
+}))
 
 const POINTS = [
   { icon: FolderKanban, title: 'Proyectos y clientes en un solo lugar', text: 'Cada empresa ve únicamente lo suyo, con roles y permisos claros.' },
@@ -52,7 +57,10 @@ export default function Login() {
     <div className="grid min-h-svh lg:grid-cols-[1.1fr_1fr]">
       {/* Panel de marca */}
       <div className="relative hidden flex-col justify-between overflow-hidden border-r border-white/[0.06] bg-[#070d18] p-12 lg:flex">
-        <div className="grid-fondo pointer-events-none absolute inset-0" />
+        <MuroPantallas
+          pantallas={MURO} max={40} columnas={6} decorativo
+          className="pointer-events-none absolute inset-0 content-start p-6 opacity-[0.17] [mask-image:radial-gradient(ellipse_at_70%_20%,#000_10%,transparent_75%)]"
+        />
         <div
           className="pointer-events-none absolute -bottom-40 -left-32 size-[560px] rounded-full opacity-40 blur-3xl"
           style={{ background: 'radial-gradient(circle, #2563eb 0%, transparent 70%)' }}
